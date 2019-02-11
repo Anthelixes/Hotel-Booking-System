@@ -1,0 +1,241 @@
+package database;
+
+import java.awt.BorderLayout;
+import java.awt.EventQueue;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+
+import java.awt.Font;
+import java.awt.List;
+import java.awt.event.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+
+import javax.swing.JTable;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JRadioButton;
+import javax.swing.JSpinner;
+import java.awt.Component;
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JTextField;
+import javax.swing.JList;
+import javax.swing.AbstractListModel;
+import java.awt.Color;
+import java.awt.SystemColor;
+import javax.swing.border.BevelBorder;
+import javax.swing.JScrollPane;
+import com.toedter.calendar.JCalendar;
+import com.toedter.calendar.JDateChooser;
+
+public class welcome extends JFrame implements ActionListener{
+	
+	private int cameraId;
+	private int tipId;
+	private String tipCamera;
+	private float pret;
+	private JPanel contentPane;
+	Connection conn;
+	Statement stmt;
+	PreparedStatement ps;
+	ResultSet rs = null;
+	private JTable table;
+
+	public welcome() {
+		connection();
+		
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setBounds(100, 100, 900, 500);
+		contentPane = new JPanel();
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		setContentPane(contentPane);
+		contentPane.setLayout(null);
+		
+		JButton btnSingle = new JButton("Single");
+		btnSingle.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
+				
+				try {
+					String query = "SELECT * FROM camera WHERE tipID = 1";
+					PreparedStatement ps = conn.prepareStatement(query);
+					ResultSet rs = ps.executeQuery();
+					ArrayList<Camera> data = new ArrayList<Camera>();
+					while(rs.next()) {
+						Camera camera = new Camera();
+						camera.setCameraId(rs.getInt("cameraID"));
+						camera.setTipId(rs.getInt("tipID"));
+						camera.setPret(rs.getFloat("pret"));
+						data.add(camera);
+						
+						System.out.println(camera.getCameraId() + " - " + camera.getTipId() + " - " + camera.getPret());
+						tableModel.addRow(new Object[] {"Single", camera.getCameraId(), camera.getPret()});
+						
+					}
+				}catch(Exception ex) {
+					System.out.println(ex);
+				}
+			}
+		});
+		btnSingle.setBounds(343, 45, 97, 25);
+		contentPane.add(btnSingle);
+		
+		JButton btnTwin = new JButton("Twin");
+		btnTwin.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
+				try {
+					String query = "SELECT * FROM camera WHERE tipID = 2";
+					PreparedStatement ps = conn.prepareStatement(query);
+					ResultSet rs = ps.executeQuery();
+					ArrayList<Camera> data = new ArrayList<Camera>();
+					while(rs.next()) {
+						Camera camera = new Camera();
+						camera.setCameraId(rs.getInt("cameraID"));
+						camera.setTipId(rs.getInt("tipID"));
+						camera.setPret(rs.getFloat("pret"));
+						data.add(camera);
+						
+						System.out.println(camera.getCameraId() + " - " + camera.getTipId() + " - " + camera.getPret());
+						tableModel.addRow(new Object[] {"Twin", camera.getCameraId(), camera.getPret()});
+						
+					}
+				}catch(Exception ex) {
+					System.out.println(ex);
+				}
+			}
+		});
+		btnTwin.setBounds(685, 45, 97, 25);
+		contentPane.add(btnTwin);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.setBounds(312, 161, 535, 279);
+		contentPane.add(scrollPane);
+		
+		table = new JTable();
+		scrollPane.setViewportView(table);
+		table.setModel(new DefaultTableModel(
+			new Object[][] {
+			},
+			new String[] {
+				"Tip", "Nr Camera", "Pret"
+			}
+		));
+		
+		JDateChooser dateChooser = new JDateChooser();
+		dateChooser.setBounds(62, 214, 116, 22);
+		contentPane.add(dateChooser);
+		
+		JButton btnSearch = new JButton("Search");
+		btnSearch.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
+					tableModel.setRowCount(0);
+					SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+					String date = sdf.format(dateChooser.getDate());
+					System.out.println(date);
+					String query = "SELECT C.tipID, C.cameraID, C.pret, f.checkOut\r\n" + 
+							"FROM camera C, factura F\r\n" + 
+							"WHERE c.cameraID = f.cameraID AND DATE(F.checkOut) <= '" + date + "'\r\n" + 
+							"GROUP BY cameraID\r\n" + 
+							"HAVING MAX(DATE(F.checkOut))";
+					PreparedStatement ps = conn.prepareStatement(query);
+					ResultSet rs = ps.executeQuery();
+					ArrayList<Camera> data = new ArrayList<Camera>();
+					while(rs.next()) {
+						Camera camera = new Camera();
+						camera.setCameraId(rs.getInt("cameraID"));
+						camera.setTipId(rs.getInt("tipID"));
+						camera.setPret(rs.getFloat("pret"));
+						data.add(camera);
+						
+						System.out.println(camera.getCameraId() + " - " + camera.getTipId() + " - " + camera.getPret());
+						tableModel.addRow(new Object[] {camera.getTipId(), camera.getCameraId(), camera.getPret()});
+						
+					}
+				}catch(Exception ex) {
+					System.out.println(ex);
+				}
+			}
+		});
+		btnSearch.setBounds(62, 249, 97, 25);
+		contentPane.add(btnSearch);
+		
+	}
+	public class Function{
+		Connection conn;
+		Statement stmt;
+		PreparedStatement ps;
+		ResultSet rs = null;
+		public ResultSet find(String s) {
+			try {
+				Class.forName("com.mysql.jdbc.Driver");
+				conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbhotel", "root", "");
+				stmt = conn.createStatement();
+				ps = conn.prepareStatement("SELECT cameraID FROM camera WHERE tipID = 1");
+				ps.setString(1, s);
+				rs = ps.executeQuery();
+			}catch(Exception e) {
+				System.out.println(e);
+			}
+			return rs;
+		}
+	}
+	public void connection() {
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+			conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/dbhotel", "root", "");
+			stmt = conn.createStatement();
+		}catch(Exception e) {
+			System.out.println(e);
+		}
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	public static void main(String[] args) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					welcome frame = new welcome();
+					frame.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+}
+/*
+SELECT C.tipID, C.cameraID, C.pret, f.checkIn, f.checkOut
+FROM camera C, factura F
+WHERE c.cameraID = f.cameraID AND 
+	(DATE(F.checkOut) = '2019-02-11' 
+	OR c.cameraID NOT IN (SELECT a.cameraID
+                           FROM factura A 
+                           WHERE f.facturaID = a.facturaID AND '2019-02-11' < a.checkOut) )
+GROUP BY cameraID
+HAVING c.cameraID = (SELECT B.cameraID
+                     FROM factura B
+                     WHERE c.cameraID = b.cameraID
+                     ORDER BY B.checkOut DESC
+                     LIMIT 1)
+*/
