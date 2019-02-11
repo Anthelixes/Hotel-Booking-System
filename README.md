@@ -1,2 +1,2 @@
 # Hotel-Booking-System
-![alt text] (screenshot/logIn.png "Log In")
+![alt text] (http://oi66.tinypic.com/2n1tcnl.jpg "Log In")
